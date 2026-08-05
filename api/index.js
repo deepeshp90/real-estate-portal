@@ -30,7 +30,6 @@ const app = express();
 
 app.use(
   cors({
-    // Updated to match your current live Render URL
     origin: ['http://localhost:5173', 'https://real-estate-portal-318w.onrender.com'],
     credentials: true,
   })
@@ -50,14 +49,16 @@ const clientDistPath = path.join(__dirname, '..', 'client', 'dist');
 // Serve static assets
 app.use(express.static(clientDistPath));
 
-// Fallback all non-API requests to index.html
-app.get('*', (req, res, next) => {
-  if (req.url.startsWith('/api')) return next();
-  res.sendFile(path.join(clientDistPath, 'index.html'), (err) => {
-    if (err) {
-      next(err);
-    }
-  });
+// Express 5 compatible fallback for all non-API GET requests to index.html
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.url.startsWith('/api')) {
+    return res.sendFile(path.join(clientDistPath, 'index.html'), (err) => {
+      if (err) {
+        next(err);
+      }
+    });
+  }
+  next();
 });
 
 // Middleware for error handling
